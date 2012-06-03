@@ -173,6 +173,8 @@ Path singleShortestPath(string A, string B, int cutPlaceA, Path *upperBound, Pat
 
 
 int findCLCSLength(string A, string B, int left_bound, int right_bound) {
+  int mid = (left_bound + right_bound) / 2;
+
 
   return 0;
 
@@ -222,12 +224,16 @@ int main() {
     for (int i = 0; i <= 2 * A.length(); i++)
       dptable[i][0].lcs_length = 0;
 
+    int length = 0;
+    allPaths[0] = singleShortestPath(A, B, 0, &upper, &lower, &length);
+    allPaths[A.length()] = allPaths[0]; 
+    /*
     for (int i = 0; i < A.length(); i++) {
       int length = 0;
       singleShortestPath(A, B, i, &upper, &lower, &length);
       clcs_result = max(length, clcs_result);
     }
-    /*
+    
     int length = 0;
     Path cut_zero = singleShortestPath(A, B, 0, upper, lower, &length);
     Path cut_m;
