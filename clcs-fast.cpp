@@ -26,23 +26,6 @@ typedef struct {
 DP_Entry dptable[2 * MAXLENGTH][MAXLENGTH];
 Path allPaths[2 * MAXLENGTH];
 
-/*int dptable[2048][2048];
-
-int LCS(string A, string B) {
-  int m = A.length(), n = B.length();
-  int i, j;
-  for (i = 0; i <= m; i++) dptable[i][0] = 0;
-  for (j = 0; j <= n; j++) dptable[0][j] = 0;
-  
-  for (i = 1; i <= m; i++) {
-    for (j = 1; j <= n; j++) {
-      dptable[i][j] = max(dptable[i-1][j], arr[i][j-1]);
-      if (A[i-1] == B[j-1]) dptable[i][j] = max(dptable[i][j], arr[i-1][j-1]+1);
-    }
-  }
-  
-  return dptable[m][n];
-}*/
 
 int min(int a, int b) {
   if (a < b) return a;
@@ -253,22 +236,6 @@ int main() {
     allPaths[A.length()+1].first_row = A.length();
     allPaths[A.length()+1].last_row = 2 * A.length();
     clcs_result = max(length, findCLCSLength(A, B, 0, A.length()));
-    /*
-    for (int i = 0; i < A.length(); i++) {
-      int length = 0;
-      singleShortestPath(A, B, i, &upper, &lower, &length);
-      clcs_result = max(length, clcs_result);
-    }
-    
-    int length = 0;
-    Path cut_zero = singleShortestPath(A, B, 0, upper, lower, &length);
-    Path cut_m;
-    for (int i = 0; i < B.length(); i++) {
-      cut_m.left_bound[i] = cut_zero.upper_row[i] + A.length();
-      cut_m.right_bound[i] = cut_zero.lower_row[i] + A.length();
-    }
-
-    clcs_result = findCLCSLength(A, B, 0, A.length());*/
     cout << clcs_result << endl; 
   }
   return 0;
