@@ -83,10 +83,11 @@ Path reconstructPathFromTable(int start_row, int start_column, int dest_row, int
   int current_row = dest_row;
   int current_column = dest_column;
   while ((current_row != start_row) || (current_column != start_column)) {
+    
     result.left_bound[current_row] = min(result.left_bound[current_row],
                                           current_column);
 
-    result.right_bound[current_row] = min(result.right_bound[current_row],
+    result.right_bound[current_row] = max(result.right_bound[current_row],
                                           current_column);
 
     if (dptable[current_row][current_column].direction ==UP) {
@@ -162,27 +163,30 @@ Path singleShortestPath(string A, string B, int cutPlaceA, Path *upperBound, Pat
   }
   
   (*lcsLength) = dptable[cutPlaceA + m][n].lcs_length;
+  cout << "lcsLength of " << cutPlaceA << " " << *lcsLength << endl;
   // From the DP table, reconstructPathFromTable.
 
   Path result = reconstructPathFromTable(cutPlaceA, 0, cutPlaceA + m, n);
 
+  for (i = cutPlaceA; i <= cutPlaceA + m; i++) {
+    cout << i << ": " << result.left_bound[i] << " " << result.right_bound[i] << endl;
+
+  }
   // return a path.
 
   return result;
 }
 
 
-int findCLCSLength(string A, string B, int left_bound, int right_bound) {
-  int mid = (left_bound + right_bound) / 2;
-
-
-  return 0;
-
-  // int maxLength = 0;
-  // singleShortestPath(A, B, m, p[upperrow], p[lowerrow], &maxLength);
-  // return max (maxLength, max(findShortestPaths(A, B, allPaths, upperrow, m)
-  //                              findShortestPaths(A, B, allPaths, m, lowerrow)))
-
+int findCLCSLength(string A, string B, int low_index, int high_index) {
+  if (high_index - low_index <= 1) { return 0; }
+  int mid = (high_index + low_index) / 2;
+  int length = 0;
+  allPaths[mid] = singleShortestPath(A, B, mid, &allPaths[low_index], &allPaths[high_index], &length);
+  cout << mid << " " << length << endl;
+  return max(length,
+            max (findCLCSLength(A, B, low_index, mid),
+                  findCLCSLength(A, B, mid, high_index)));
 }; 
 
 
@@ -227,6 +231,9 @@ int main() {
     int length = 0;
     allPaths[0] = singleShortestPath(A, B, 0, &upper, &lower, &length);
     allPaths[A.length()] = allPaths[0]; 
+
+
+    clcs_result = findCLCSLength(A, B, 0, A.length());
     /*
     for (int i = 0; i < A.length(); i++) {
       int length = 0;
