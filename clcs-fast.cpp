@@ -70,29 +70,36 @@ bool isValidNode(int row, int column, Path *upperBound, Path *lowerBound) {
 /* Given a DP table entry, starting node and destination node,
  * reconstruct the shortest path from start to destination.
  */
-Path reconstructPathFromTable(int start_row, int start_column, int dest_row, int dest_column) {
+void reconstructPathFromTable(int start_row, int start_column, int dest_row, int dest_column, Path *result) {
   // trace back from dest to satart.
   // return a path
 
-  Path result;
   for (int i = start_row; i <= dest_row; i++) {
-    result.left_bound[i] = MAXLENGTH;
-    result.right_bound[i] = 0;
+    result->left_bound[i] = MAXLENGTH;
+    result->right_bound[i] = 0;
   } 
 
   int current_row = dest_row;
   int current_column = dest_column;
   while ((current_row != start_row) || (current_column != start_column)) {
-    result.left_bound[current_row] = min(result.left_bound[current_row],
+    cout << current_row << " " << current_column << endl;
+    result->left_bound[current_row] = min(result->left_bound[current_row],
                                           current_column);
 
-    result.right_bound[current_row] = min(result.right_bound[current_row],
-                                          current_column)
-
-    ;
+    result->right_bound[current_row] = max(result->right_bound[current_row],
+                                          current_column);
+    cout << "here " << dptable[current_row][current_column].direction << endl;
+    if (dptable[current_row][current_column].direction ==UP) {
+      current_row--;
+    } else if (dptable[current_row][current_column].direction == LEFT) {
+      current_column--;
+    } else if (dptable[current_row][current_column].direction == DIAGONAL) {
+      current_row--;
+      current_column--;
+    }
+    cout << "after: " << current_row << " " << current_column << endl;
   }
-
-  return result;
+  cout << "I'm out" << endl;
 }
 
 
@@ -103,7 +110,7 @@ Path reconstructPathFromTable(int start_row, int start_column, int dest_row, int
     - upperBound and lowerBound represent the upper and lower paths that we can't cross
   Returns the shortest path information from (cutPlaceA, 0) to (cutPlace + strlen(A), strlen(B)).
  */
-Path singleShortestPath(string A, string B, int cutPlaceA, Path *upperBound, Path *lowerBound,
+void singleShortestPath(string A, string B, int cutPlaceA, Path *upperBound, Path *lowerBound,
                         int *lcsLength) {
 
   // First compute the DP table from (cutPlaceA, 0) to (cutPlace + strlen(A), strlen(B)), without
@@ -112,7 +119,10 @@ Path singleShortestPath(string A, string B, int cutPlaceA, Path *upperBound, Pat
 
   int m = A.length(), n = B.length();
   int i, j;
-  for (i = 0; i <= 2 * m; i++) dptable[i][0].lcs_length = 0;
+  for (i = 0; i <= 2 * m; i++){
+    dptable[i][0].lcs_length = 0;
+    dptable[cutPlaceA][j].direction = UP;
+  }
   for (j = 0; j <= n; j++) {
       dptable[cutPlaceA][j].lcs_length = 0;
       dptable[cutPlaceA][j].direction = LEFT;
@@ -139,11 +149,13 @@ Path singleShortestPath(string A, string B, int cutPlaceA, Path *upperBound, Pat
         int diag_value = 0;
         if (isValidNode(cutPlaceA+i-1,j-1,upperBound, lowerBound) ) { 
           diag_value= dptable[cutPlaceA+i-1][j-1].lcs_length+1;
+
+          if (diag_value > dptable[cutPlaceA + i][j].lcs_length) {
+            dptable[cutPlaceA+i][j].lcs_length = diag_value;
+            dptable[cutPlaceA+i][j].direction = DIAGONAL;
+          }
         } 
-        if (diag_value > dptable[cutPlaceA + i][j].lcs_length) {
-          dptable[cutPlaceA+i][j].lcs_length = diag_value;
-          dptable[cutPlaceA+i][j].direction = DIAGONAL;
-        }
+
 
       }
     }
@@ -151,11 +163,8 @@ Path singleShortestPath(string A, string B, int cutPlaceA, Path *upperBound, Pat
   
   (*lcsLength) = dptable[cutPlaceA + m][n].lcs_length;
   // From the DP table, reconstructPathFromTable.
-  // reconstructPathFromTable(cutPlaceA, 0, cutPlaceA + m, n);
 
-  // return a path.
-  Path temp;
-  return temp;
+  // reconstructPathFromTable(cutPlaceA, 0, cutPlaceA + m, n, result);
 }
 
 
