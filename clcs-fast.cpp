@@ -88,6 +88,7 @@ Path reconstructPathFromTable(int start_row, int start_column, int dest_row, int
  */
 Path singleShortestPath(string A, string B, int cutPlaceA, Path upperBound, Path lowerBound,
                         int *lcsLength) {
+
   // First compute the DP table from (cutPlaceA, 0) to (cutPlace + strlen(A), strlen(B)), without
   // ever crossing the path boundaries.
 
@@ -99,8 +100,9 @@ Path singleShortestPath(string A, string B, int cutPlaceA, Path upperBound, Path
 
   for (i = 1; i <= m; i++) {
     for (j = 1; j <= n; j++) {
-      if (!isValidNode(cutPlaceA + i, j, upperBound, lowerBound)) 
+      if (!isValidNode(cutPlaceA + i, j, upperBound, lowerBound)) { 
         break;
+      }
      
 
       dptable[cutPlaceA + i][j].lcs_length = 0;
@@ -126,9 +128,7 @@ Path singleShortestPath(string A, string B, int cutPlaceA, Path upperBound, Path
       }
     }
   }
-  
   (*lcsLength) = dptable[cutPlaceA + m][n].lcs_length;
-
   // From the DP table, reconstructPathFromTable.
   
   // return a path.
@@ -176,7 +176,7 @@ int main() {
     // Find the path starting from index i = 0, with no boundaries.
     Path upper;
     Path lower;
-    for (int i = 0; i < B.length(); i++) {
+    for (int i = 0; i <= B.length(); i++) {
       upper.upper_row[i] = 0;
       upper.lower_row[i] = 0;
       lower.upper_row[i] = A.length();
