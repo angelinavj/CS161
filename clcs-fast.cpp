@@ -10,8 +10,8 @@ using namespace std;
 
 #define MAXLENGTH 2002
 typedef struct {
-  int upper_row[MAXLENGTH];
-  int lower_row[MAXLENGTH];
+  int left_column[MAXLENGTH];
+  int right_column[MAXLENGTH];
 } Path;
 
 typedef struct {
@@ -24,22 +24,22 @@ typedef struct {
 DP_Entry dptable[2 * MAXLENGTH][MAXLENGTH];
 Path allPaths[MAXLENGTH];
 
-/*int arr[2048][2048];
+/*int dptable[2048][2048];
 
 int LCS(string A, string B) {
   int m = A.length(), n = B.length();
   int i, j;
-  for (i = 0; i <= m; i++) arr[i][0] = 0;
-  for (j = 0; j <= n; j++) arr[0][j] = 0;
+  for (i = 0; i <= m; i++) dptable[i][0] = 0;
+  for (j = 0; j <= n; j++) dptable[0][j] = 0;
   
   for (i = 1; i <= m; i++) {
     for (j = 1; j <= n; j++) {
-      arr[i][j] = max(arr[i-1][j], arr[i][j-1]);
-      if (A[i-1] == B[j-1]) arr[i][j] = max(arr[i][j], arr[i-1][j-1]+1);
+      dptable[i][j] = max(dptable[i-1][j], arr[i][j-1]);
+      if (A[i-1] == B[j-1]) dptable[i][j] = max(dptable[i][j], arr[i-1][j-1]+1);
     }
   }
   
-  return arr[m][n];
+  return dptable[m][n];
 }*/
 
 int min(int a, int b) {
@@ -61,10 +61,6 @@ string cut(string A, int cut_place) {
  * does not cross / in the middle of upperBound and lowerBound.
  */
 bool isValidNode(int row, int column, Path upperBound, Path lowerBound) {
-  if ((row < upperBound.upper_row[column]) || (row > lowerBound.lower_row[column])) {
-    return false;
-  }
-  return true;
 }
 
 /* Given a DP table entry, starting node and destination node,
@@ -94,40 +90,18 @@ Path singleShortestPath(string A, string B, int cutPlaceA, Path upperBound, Path
 
 
   int m = A.length(), n = B.length();
-
-  int i, j; 
+  int i, j;
   for (i = 0; i <= 2 * m; i++) dptable[i][0].lcs_length = 0;
-
+  for (j = 0; j <= n; j++) dptable[cutPlaceA][j].lcs_length = 0;
+  
   for (i = 1; i <= m; i++) {
     for (j = 1; j <= n; j++) {
-      if (!isValidNode(cutPlaceA + i, j, upperBound, lowerBound)) { 
-        break;
-      }
-     
-
-      dptable[cutPlaceA + i][j].lcs_length = 0;
-
-      if ((isValidNode(cutPlaceA + i - 1, j, upperBound, lowerBound)) && (i != 1)) {
-        dptable[cutPlaceA + i][j].lcs_length = max (dptable[cutPlaceA + i][j].lcs_length,
-                                                    dptable[cutPlaceA + i - 1][j].lcs_length);
-      }
-
-      if (isValidNode(cutPlaceA + i, j - 1, upperBound, lowerBound)) {
-        dptable[cutPlaceA + i][j].lcs_length = max (dptable[cutPlaceA + i][j].lcs_length,
-                                                    dptable[cutPlaceA + i][j- 1].lcs_length);
-      }
-
-      if (isValidNode(cutPlaceA + i - 1, j - 1, upperBound, lowerBound) && (i != 1)) {
-        if (A[(cutPlaceA + i - 1) % m] == B[j-1]) {
-          dptable[cutPlaceA + i][j].lcs_length = max (dptable[cutPlaceA + i][j].lcs_length,
-                                                    dptable[cutPlaceA + i - 1][j- 1].lcs_length + 1);
-        }
-      } else {
-          dptable[cutPlaceA + i][j].lcs_length = max (dptable[cutPlaceA + i][j].lcs_length,
-                                                      1);
-      }
+      
+      dptable[cutPlaceA + i][j].lcs_length = max(dptable[cutPlaceA+i-1][j].lcs_length, dptable[cutPlaceA+i][j-1].lcs_length);
+      if (A[(cutPlaceA+i-1) % m] == B[j-1]) dptable[cutPlaceA+i][j].lcs_length = max(dptable[cutPlaceA+i][j].lcs_length, dptable[cutPlaceA+i-1][j-1].lcs_length+1);
     }
   }
+  
   (*lcsLength) = dptable[cutPlaceA + m][n].lcs_length;
   // From the DP table, reconstructPathFromTable.
   
@@ -137,7 +111,7 @@ Path singleShortestPath(string A, string B, int cutPlaceA, Path upperBound, Path
 }
 
 
-int findCLCSLength(string A, string B, int upper_row, int lower_row) {
+int findCLCSLength(string A, string B, int left_column, int right_column) {
 
   return 0;
 
@@ -166,24 +140,27 @@ int main() {
     }
 
     // Initialize allpaths.
-    for (int i = 0; i <= A.length(); i++) {
+    for (int i = 0; i <= 2 * A.length(); i++) {
       for (int j = 0; j <= B.length(); j++) {
-        allPaths[i].upper_row[j] = 0;
-        allPaths[i].lower_row[j] = 0; 
+        allPaths[i].left_column[j] = 0;
+        allPaths[i].right_column[j] = 0; 
       }
     }
   
     // Find the path starting from index i = 0, with no boundaries.
     Path upper;
     Path lower;
-    for (int i = 0; i <= B.length(); i++) {
-      upper.upper_row[i] = 0;
-      upper.lower_row[i] = 0;
-      lower.upper_row[i] = A.length();
-      lower.lower_row[i] = A.length(); 
+    for (int i = 0; i <= 2 * A.length(); i++) {
+      upper.left_column[i] = 0;
+      upper.right_column[i] = 0;
+      lower.left_column[i] = 2 * A.length();
+      lower.right_column[i] = 2 * A.length(); 
     }
 
     
+    for (int i = 0; i <= 2 * A.length(); i++)
+      dptable[i][0].lcs_length = 0;
+
     for (int i = 0; i < A.length(); i++) {
       int length = 0;
       singleShortestPath(A, B, i, upper, lower, &length);
@@ -194,8 +171,8 @@ int main() {
     Path cut_zero = singleShortestPath(A, B, 0, upper, lower, &length);
     Path cut_m;
     for (int i = 0; i < B.length(); i++) {
-      cut_m.upper_row[i] = cut_zero.upper_row[i] + A.length();
-      cut_m.lower_row[i] = cut_zero.lower_row[i] + A.length();
+      cut_m.left_column[i] = cut_zero.upper_row[i] + A.length();
+      cut_m.right_column[i] = cut_zero.lower_row[i] + A.length();
     }
 
     clcs_result = findCLCSLength(A, B, 0, A.length());*/
