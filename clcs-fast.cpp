@@ -12,6 +12,8 @@ using namespace std;
 typedef struct {
   int left_bound[2 * MAXLENGTH];
   int right_bound[2 * MAXLENGTH];
+  int first_row;
+  int last_row;
 } Path;
 
 typedef struct {
@@ -61,8 +63,12 @@ string cut(string A, int cut_place) {
  * does not cross / in the middle of upperBound and lowerBound.
  */
 bool isValidNode(int row, int column, Path *upperBound, Path *lowerBound) {
-  if ((column > upperBound->right_bound[row]) || (column < lowerBound->left_bound[row])) {
-    return false;
+  if ((row >= upperBound->first_row) && (row <= upperBound->last_row)) {
+    if (column > upperBound->right_bound[row]) return false;
+  }
+
+  if ((row >= lowerBound->first_row) && (row <= upperBound->last_row)) {
+    if (column < lowerBound->left_bound[row]) return false;
   }
   return true;
 }
@@ -79,17 +85,19 @@ Path reconstructPathFromTable(int start_row, int start_column, int dest_row, int
     result.left_bound[i] = MAXLENGTH;
     result.right_bound[i] = 0;
   } 
+  result.first_row = start_row;
+  result.last_row = dest_row;
 
   int current_row = dest_row;
   int current_column = dest_column;
-  while ((current_row != start_row) || (current_column != start_column)) {
-    
+  while (true) {
+    cout << "in reconstructPath: current_row: " << current_row << " current column " << current_column << endl; 
     result.left_bound[current_row] = min(result.left_bound[current_row],
                                           current_column);
 
     result.right_bound[current_row] = max(result.right_bound[current_row],
                                           current_column);
-
+    if ( (current_row == start_row) && (current_column == start_column)) break;
     if (dptable[current_row][current_column].direction ==UP) {
       current_row--;
     } else if (dptable[current_row][current_column].direction == LEFT) {
@@ -130,7 +138,25 @@ Path singleShortestPath(string A, string B, int cutPlaceA, Path *upperBound, Pat
   }
   
   for (i = 1; i <= m; i++) {
-    for (j = lowerBound->left_bound[cutPlaceA + i]; j <= upperBound->right_bound[cutPlaceA + i]; j++) {
+    int start_column;
+    if ((i >= lowerBound->first_row) && (i <= lowerBound->last_row)) {
+      start_column = lowerBound->left_bound[cutPlaceA + i];
+    } else {
+      start_column = 1;
+    }
+
+     
+    int end_column; 
+    if ((i >= upperBound->first_row) && (i <= upperBound->last_row)) {
+      end_column = upperBound->right_bound[cutPlaceA + i];
+    } else {
+      end_column = n;
+    }
+    cout << "cutPlaceA: " << cutPlaceA <<" " << start_column << " " << end_column << endl;
+    cout << "lowerBound: " << lowerBound->first_row << " " << lowerBound->last_row << endl;
+
+    cout << "upperBound: " << upperBound->first_row << " " << upperBound->last_row << endl;
+    for (j = start_column; j <= end_column; j++) {
       dptable[cutPlaceA + i][j].lcs_length = 0;
 
       if (isValidNode(cutPlaceA+i-1,j,upperBound, lowerBound) &&
@@ -156,10 +182,10 @@ Path singleShortestPath(string A, string B, int cutPlaceA, Path *upperBound, Pat
             dptable[cutPlaceA+i][j].direction = DIAGONAL;
           }
         } 
-
-
+      
       }
     }
+    cout << endl;
   }
   
   (*lcsLength) = dptable[cutPlaceA + m][n].lcs_length;
@@ -224,14 +250,20 @@ int main() {
       lower.right_bound[i] = 0; 
     }
 
+    upper.first_row = 0;
+    upper.last_row = 2 * A.length();
+    lower.first_row = 0;
+    lower.last_row = 2 * A.length();
     
     for (int i = 0; i <= 2 * A.length(); i++)
       dptable[i][0].lcs_length = 0;
 
     int length = 0;
     allPaths[0] = singleShortestPath(A, B, 0, &upper, &lower, &length);
+ 
     allPaths[A.length()] = allPaths[0]; 
-
+    allPaths[A.length()].first_row = A.length();
+    allPaths[A.length()].last_row = 2 * A.length();
 
     clcs_result = findCLCSLength(A, B, 0, A.length());
     /*
