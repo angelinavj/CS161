@@ -24,7 +24,7 @@ typedef struct {
 
 
 DP_Entry dptable[2 * MAXLENGTH][MAXLENGTH];
-Path allPaths[MAXLENGTH];
+Path allPaths[2 * MAXLENGTH];
 
 /*int dptable[2048][2048];
 
@@ -91,7 +91,6 @@ Path reconstructPathFromTable(int start_row, int start_column, int dest_row, int
   int current_row = dest_row;
   int current_column = dest_column;
   while (true) {
-    cout << "in reconstructPath: current_row: " << current_row << " current column " << current_column << endl; 
     result.left_bound[current_row] = min(result.left_bound[current_row],
                                           current_column);
 
@@ -139,23 +138,19 @@ Path singleShortestPath(string A, string B, int cutPlaceA, Path *upperBound, Pat
   
   for (i = 1; i <= m; i++) {
     int start_column;
-    if ((i >= lowerBound->first_row) && (i <= lowerBound->last_row)) {
-      start_column = lowerBound->left_bound[cutPlaceA + i];
+    if ((cutPlaceA+i >= lowerBound->first_row) && (cutPlaceA+i <= lowerBound->last_row)) {
+      start_column = max(lowerBound->left_bound[cutPlaceA + i], 1);
     } else {
       start_column = 1;
     }
 
      
     int end_column; 
-    if ((i >= upperBound->first_row) && (i <= upperBound->last_row)) {
-      end_column = upperBound->right_bound[cutPlaceA + i];
+    if ((cutPlaceA+i >= upperBound->first_row) && (cutPlaceA+i <= upperBound->last_row)) {
+      end_column = max(upperBound->right_bound[cutPlaceA + i], 1);
     } else {
       end_column = n;
     }
-    cout << "cutPlaceA: " << cutPlaceA <<" " << start_column << " " << end_column << endl;
-    cout << "lowerBound: " << lowerBound->first_row << " " << lowerBound->last_row << endl;
-
-    cout << "upperBound: " << upperBound->first_row << " " << upperBound->last_row << endl;
     for (j = start_column; j <= end_column; j++) {
       dptable[cutPlaceA + i][j].lcs_length = 0;
 
@@ -185,19 +180,11 @@ Path singleShortestPath(string A, string B, int cutPlaceA, Path *upperBound, Pat
       
       }
     }
-    cout << endl;
   }
   
   (*lcsLength) = dptable[cutPlaceA + m][n].lcs_length;
-  cout << "lcsLength of " << cutPlaceA << " " << *lcsLength << endl;
   // From the DP table, reconstructPathFromTable.
-
   Path result = reconstructPathFromTable(cutPlaceA, 0, cutPlaceA + m, n);
-
-  for (i = cutPlaceA; i <= cutPlaceA + m; i++) {
-    cout << i << ": " << result.left_bound[i] << " " << result.right_bound[i] << endl;
-
-  }
   // return a path.
 
   return result;
@@ -205,11 +192,12 @@ Path singleShortestPath(string A, string B, int cutPlaceA, Path *upperBound, Pat
 
 
 int findCLCSLength(string A, string B, int low_index, int high_index) {
-  if (high_index - low_index <= 1) { return 0; }
+  if (high_index - low_index <= 1) {
+    return 0;
+  }
   int mid = (high_index + low_index) / 2;
   int length = 0;
   allPaths[mid] = singleShortestPath(A, B, mid, &allPaths[low_index], &allPaths[high_index], &length);
-  cout << mid << " " << length << endl;
   return max(length,
             max (findCLCSLength(A, B, low_index, mid),
                   findCLCSLength(A, B, mid, high_index)));
@@ -224,8 +212,8 @@ int main() {
   for (int tc = 0; tc < T; tc++) {
     int clcs_result = 0;
 
-
     cin >> A >> B;
+
     if (min(A.length(), B.length()) == B.length()) {
       string temp = A;
       A = B;
@@ -259,13 +247,12 @@ int main() {
       dptable[i][0].lcs_length = 0;
 
     int length = 0;
-    allPaths[0] = singleShortestPath(A, B, 0, &upper, &lower, &length);
- 
-    allPaths[A.length()] = allPaths[0]; 
-    allPaths[A.length()].first_row = A.length();
-    allPaths[A.length()].last_row = 2 * A.length();
 
-    clcs_result = findCLCSLength(A, B, 0, A.length());
+    allPaths[0] = singleShortestPath(A, B, 0, &upper, &lower, &length);
+    allPaths[A.length()+1] = allPaths[0]; 
+    allPaths[A.length()+1].first_row = A.length();
+    allPaths[A.length()+1].last_row = 2 * A.length();
+    clcs_result = max(length, findCLCSLength(A, B, 0, A.length()));
     /*
     for (int i = 0; i < A.length(); i++) {
       int length = 0;
