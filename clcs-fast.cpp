@@ -10,8 +10,8 @@ using namespace std;
 
 #define MAXLENGTH 2002
 typedef struct {
-  int left_column[MAXLENGTH];
-  int right_column[MAXLENGTH];
+  int left_bound[2 * MAXLENGTH];
+  int right_bound[2 * MAXLENGTH];
 } Path;
 
 typedef struct {
@@ -60,7 +60,11 @@ string cut(string A, int cut_place) {
  * Given the upperbound and lower bound, returns true if the node, represented by row and column,
  * does not cross / in the middle of upperBound and lowerBound.
  */
-bool isValidNode(int row, int column, Path upperBound, Path lowerBound) {
+bool isValidNode(int row, int column, Path *upperBound, Path *lowerBound) {
+  if ((column > upperBound->right_bound[row]) || (column < lowerBound->left_bound[row])) {
+    return false;
+  }
+  return true;
 }
 
 /* Given a DP table entry, starting node and destination node,
@@ -70,8 +74,25 @@ Path reconstructPathFromTable(int start_row, int start_column, int dest_row, int
   // trace back from dest to satart.
   // return a path
 
-  Path temp;
-  return temp;
+  Path result;
+  for (int i = start_row; i <= dest_row; i++) {
+    result.left_bound[i] = MAXLENGTH;
+    result.right_bound[i] = 0;
+  } 
+
+  int current_row = dest_row;
+  int current_column = dest_column;
+  while ((current_row != start_row) || (current_column != start_column)) {
+    result.left_bound[current_row] = min(result.left_bound[current_row],
+                                          current_column);
+
+    result.right_bound[current_row] = min(result.right_bound[current_row],
+                                          current_column)
+
+    ;
+  }
+
+  return result;
 }
 
 
@@ -82,7 +103,7 @@ Path reconstructPathFromTable(int start_row, int start_column, int dest_row, int
     - upperBound and lowerBound represent the upper and lower paths that we can't cross
   Returns the shortest path information from (cutPlaceA, 0) to (cutPlace + strlen(A), strlen(B)).
  */
-Path singleShortestPath(string A, string B, int cutPlaceA, Path upperBound, Path lowerBound,
+Path singleShortestPath(string A, string B, int cutPlaceA, Path *upperBound, Path *lowerBound,
                         int *lcsLength) {
 
   // First compute the DP table from (cutPlaceA, 0) to (cutPlace + strlen(A), strlen(B)), without
@@ -92,26 +113,53 @@ Path singleShortestPath(string A, string B, int cutPlaceA, Path upperBound, Path
   int m = A.length(), n = B.length();
   int i, j;
   for (i = 0; i <= 2 * m; i++) dptable[i][0].lcs_length = 0;
-  for (j = 0; j <= n; j++) dptable[cutPlaceA][j].lcs_length = 0;
+  for (j = 0; j <= n; j++) {
+      dptable[cutPlaceA][j].lcs_length = 0;
+      dptable[cutPlaceA][j].direction = LEFT;
+  }
   
   for (i = 1; i <= m; i++) {
-    for (j = 1; j <= n; j++) {
-      
-      dptable[cutPlaceA + i][j].lcs_length = max(dptable[cutPlaceA+i-1][j].lcs_length, dptable[cutPlaceA+i][j-1].lcs_length);
-      if (A[(cutPlaceA+i-1) % m] == B[j-1]) dptable[cutPlaceA+i][j].lcs_length = max(dptable[cutPlaceA+i][j].lcs_length, dptable[cutPlaceA+i-1][j-1].lcs_length+1);
+    for (j = lowerBound->left_bound[cutPlaceA + i]; j <= upperBound->right_bound[cutPlaceA + i]; j++) {
+      dptable[cutPlaceA + i][j].lcs_length = 0;
+
+      if (isValidNode(cutPlaceA+i-1,j,upperBound, lowerBound) &&
+            (dptable[cutPlaceA+i-1][j].lcs_length > dptable[cutPlaceA + i][j].lcs_length)) {
+        dptable[cutPlaceA + i][j].lcs_length = dptable[cutPlaceA+i-1][j].lcs_length;
+        dptable[cutPlaceA + i][j].direction = UP;
+      }
+
+      if (isValidNode(cutPlaceA+i,j-1,upperBound, lowerBound) &&
+            (dptable[cutPlaceA+i][j-1].lcs_length > dptable[cutPlaceA + i][j].lcs_length)) { 
+        dptable[cutPlaceA + i][j].lcs_length =  dptable[cutPlaceA+i][j-1].lcs_length;
+        dptable[cutPlaceA + i][j].direction = LEFT;
+      }
+
+
+      if (A[(cutPlaceA+i-1) % m] == B[j-1]) {
+        int diag_value = 0;
+        if (isValidNode(cutPlaceA+i-1,j-1,upperBound, lowerBound) ) { 
+          diag_value= dptable[cutPlaceA+i-1][j-1].lcs_length+1;
+        } 
+        if (diag_value > dptable[cutPlaceA + i][j].lcs_length) {
+          dptable[cutPlaceA+i][j].lcs_length = diag_value;
+          dptable[cutPlaceA+i][j].direction = DIAGONAL;
+        }
+
+      }
     }
   }
   
   (*lcsLength) = dptable[cutPlaceA + m][n].lcs_length;
   // From the DP table, reconstructPathFromTable.
-  
+  // reconstructPathFromTable(cutPlaceA, 0, cutPlaceA + m, n);
+
   // return a path.
   Path temp;
   return temp;
 }
 
 
-int findCLCSLength(string A, string B, int left_column, int right_column) {
+int findCLCSLength(string A, string B, int left_bound, int right_bound) {
 
   return 0;
 
@@ -142,8 +190,8 @@ int main() {
     // Initialize allpaths.
     for (int i = 0; i <= 2 * A.length(); i++) {
       for (int j = 0; j <= B.length(); j++) {
-        allPaths[i].left_column[j] = 0;
-        allPaths[i].right_column[j] = 0; 
+        allPaths[i].left_bound[j] = 0;
+        allPaths[i].right_bound[j] = 0; 
       }
     }
   
@@ -151,10 +199,10 @@ int main() {
     Path upper;
     Path lower;
     for (int i = 0; i <= 2 * A.length(); i++) {
-      upper.left_column[i] = 0;
-      upper.right_column[i] = 0;
-      lower.left_column[i] = 2 * A.length();
-      lower.right_column[i] = 2 * A.length(); 
+      upper.left_bound[i] = B.length();
+      upper.right_bound[i] = B.length();
+      lower.left_bound[i] = 0;
+      lower.right_bound[i] = 0; 
     }
 
     
@@ -163,7 +211,7 @@ int main() {
 
     for (int i = 0; i < A.length(); i++) {
       int length = 0;
-      singleShortestPath(A, B, i, upper, lower, &length);
+      singleShortestPath(A, B, i, &upper, &lower, &length);
       clcs_result = max(length, clcs_result);
     }
     /*
@@ -171,8 +219,8 @@ int main() {
     Path cut_zero = singleShortestPath(A, B, 0, upper, lower, &length);
     Path cut_m;
     for (int i = 0; i < B.length(); i++) {
-      cut_m.left_column[i] = cut_zero.upper_row[i] + A.length();
-      cut_m.right_column[i] = cut_zero.lower_row[i] + A.length();
+      cut_m.left_bound[i] = cut_zero.upper_row[i] + A.length();
+      cut_m.right_bound[i] = cut_zero.lower_row[i] + A.length();
     }
 
     clcs_result = findCLCSLength(A, B, 0, A.length());*/
