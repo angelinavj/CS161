@@ -268,8 +268,17 @@ int main() {
     // Initialize allpaths.
     for (int i = 0; i <= 2 * A.length(); i++) {
       for (int j = 0; j <= B.length(); j++) {
+        dptable[i][j].lcs_length = 0;
+        dptable[i][j].direction = LEFT;
+      }
+
+      if (i > A.length()) continue;
+
+      allPaths[i].first_row = i;
+      allPaths[i].last_row = i + A.length();
+      for (int j = allPaths[i].first_row; j <= allPaths[i].last_row; j++) {
         allPaths[i].left_bound[j] = 0;
-        allPaths[i].right_bound[j] = 0; 
+        allPaths[i].right_bound[j] = B.length(); 
       }
     }
   
