@@ -272,7 +272,7 @@ int main() {
       B = temp;
     }
 
-    // Initialize allpaths.
+    //For every test case, re-initialize/empty the DP Table and Paths
     for (int i = 0; i <= 2 * A.length(); i++) {
       for (int j = 0; j <= B.length(); j++) {
         dptable[i][j].lcs_length = 0;
