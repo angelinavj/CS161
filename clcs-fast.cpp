@@ -1,3 +1,10 @@
+/*
+  Group:
+  -Grant Ho, SUID: grantho, SUID Number: 05653617
+  -Angelina Veni Johanna, SUID: veni, SUID Number: 05651929
+*/
+
+
 #include <algorithm>
 #include <iostream>
 #include <string>
